@@ -37,13 +37,13 @@ new.location<-function(current.location, distance, angle){
 new.point<-function(cluster,seed){
   point<-matrix(ncol=2,nrow=1)
   set.seed(seed)
-  seed.vector<-sample(size=30,x=1*10^6)[c(10,20,30)]
+  seed.vector<-sample(size=300,x=1*10^6)[c(100,200,300)]
   set.seed(seed.vector[1])
   i<-which(rmultinom(1, size=1, prob=cluster$pro)==1)
-  seed<-set.seed(seed.vector[2])
+  seed<-seed.vector[2]
   while(is.na(point[,1])| is.na(point[,2])){
     set.seed(seed)
-    seed.vector.loop<-sample(size=20,x=1*10^6)[c(10,20)]
+    seed.vector.loop<-sample(size=200,x=1*10^6)[c(100,200)]
     set.seed(seed.vector.loop[1])
     point<-rmvnorm(n=1, mean = cluster$mean[,i], sigma = cluster$variance[,,i])
     seed<-seed.vector.loop[2]
@@ -60,12 +60,11 @@ new.point<-function(cluster,seed){
 path.of.animal<-function(number.of.steps,seed,cluster){
 	# Creates a stream of random numbers
 	set.seed(seed)
-	random.stream<-sample(size=number.of.steps,x=number.of.steps*10^6)
+	random.stream<-sample(size=number.of.steps*10,x=number.of.steps*10^6)[(1:number.of.steps)*10]
 	
 	# Sets the initial time and location and state
 	new.time<-as.POSIXlt('2000-1-1 00:00:00')
-	current.state<-rbinom(1,1,0.5)
-	new.location.est<-c(rnorm(1,0,100),rnorm(1,0,100))
+	new.location.est<-c(0,0)#c(rnorm(1,0,100),rnorm(1,0,100))
 	current.location<-matrix(ncol=5,c(new.location.est,as.character(new.time),NA,NA))
 	
 	#print(current.location)
@@ -74,7 +73,7 @@ path.of.animal<-function(number.of.steps,seed,cluster){
 		set.seed(random.stream[step])
 		random.stream.two<-sample(size=50,x=50*10^6)
 
-    point<-new.point(cluster,random.stream.two[10])
+    point<-new.point(cluster,random.stream.two[50])
 		new.time<-new.time+5*60*60
 		new.location.est<-new.location(new.location.est, distance=point[1], angle=point[2])
 		
@@ -85,153 +84,126 @@ path.of.animal<-function(number.of.steps,seed,cluster){
 }
 ################################
 
-males.females.blocks<-unlist(lapply(b,function(x){unlist(lapply(x,function(y){y$Sex[1]}))}))
-
-set.seed(1)
-female.blocks.no<-which(males.females.blocks==1)
-females.sample<-sort(sample(female.blocks.no,round(length(female.blocks.no)*.9),replace=FALSE))
-females.valid<-female.blocks.no[!(female.blocks.no %in% females.sample)]
-
-set.seed(1)
-male.blocks.no<-which(males.females.blocks==2)
-males.sample<-sort(sample(male.blocks.no,round(length(male.blocks.no)*.9),replace=FALSE))
-males.valid<-male.blocks.no[!(male.blocks.no %in% males.sample)]
-
-blocks<-unlist(b,recursive = FALSE)
-blocks<-blocks[c(females.sample,males.sample)]
-
-blocks.valid<-unlist(b,recursive = FALSE)
-blocks.valid<-blocks.valid[c(females.valid,males.valid)]
 
 
-all.blocks<-blocks[[1]][1,][-1,]
-for(i in 1:length(blocks)){
-  tempdata<-blocks[[i]]
-  l.tempdata<-(dim(tempdata)[1])
-  if(l.tempdata>0){
-    all.blocks<-rbind(all.blocks,tempdata)
-  }
-}
+classifcation.simulation.validation<-function(data,seed){
+  all.block.numbers<-1:length(unlist(data,recursive=FALSE))
   
-par(mfrow=c(2,1))
-dist<-all.blocks$block_dist.difference; dist[dist<1.00]<-1.00;#dist<-log(dist)
-angle<-abs(all.blocks$block_angle.difference)
-all.test.data<-cbind(all.blocks$Sex,dist ,angle)
-all.test.data<-all.test.data[which(!is.na(all.test.data[,1]) & !is.na(all.test.data[,2])  & !is.na(all.test.data[,3]) ),]
-cluster<-list()
-test.dist<-list();test.angle<-list()
-for(j in 1:2){
-  all.test.data.sex<-all.test.data[which(all.test.data[,1]==j),]
-  test.data<-all.test.data.sex[,-1]
+  cluster.list<-vector(mode="list",length=length(unlist(data,recursive=FALSE)))
+  temp<-matrix(ncol=6,nrow=length(unlist(data,recursive=FALSE)))
   
-  fit <- Mclust(test.data)
-  cluster[[j]]<-summary(fit)[]
-  print(summary(fit))
-  if(j==1){name="female_cluster.pdf"}else{name="male_cluster.pdf"}
-  pdf(name)
-  plot(fit);
-  dev.off()
+  for(i in all.block.numbers){
+    print(i)
+    valid=i
+    
+    blocks<-unlist(data,recursive = FALSE)
+    blocks.valid<-blocks[c(valid)]
+    sex<-blocks.valid[[1]]$Sex[1]
+    sample<-all.block.numbers[-i]
+    blocks.sample<-blocks[c(sample)]
+    
+    print(which(unlist(lapply(blocks.sample,function(x){x$Sex[1]}))==sex))
+    
+    blocks.sample<-blocks.sample[which(unlist(lapply(blocks.sample,function(x){x$Sex[1]}))==sex)]
+    
+    
+    pdf(paste("CrossValidation_block",i,"_sex",sex,".pdf",sep=""))
+    par(mfrow=c(2,2))
 
-}
-2
-0
-2
-0
-
-blocks.valid<-unlist(b,recursive = FALSE)
-blocks.valid<-blocks.valid[c(females.valid)]
-all.blocks.valid.f<-blocks.valid[[1]][1,][-1,]
-for(i in 1:length(blocks.valid)){
-  tempdata<-blocks.valid[[i]]
-  l.tempdata<-(dim(tempdata)[1])
-  if(l.tempdata>0){
-    all.blocks.valid.f<-rbind(all.blocks.valid.f,tempdata)
+    
+    ## combine sample data into one dataframe
+    all.blocks<-blocks.sample[[1]][1,][-1,]
+    for(j in 1:length(blocks.sample)){
+      tempdata<-blocks.sample[[j]]
+      l.tempdata<-(dim(tempdata)[1])
+      if(l.tempdata>0){
+        all.blocks<-rbind(all.blocks,tempdata)
+      }
+    }
+    
+    cluster<-cluster.data(all.blocks,name=paste(sex,"cluster",i,".pdf",sep="")) 
+    
+    all.blocks.valid<-blocks.valid[[1]][1,][-1,]
+    for(j in 1:length(blocks.valid)){
+      tempdata<-blocks.valid[[j]]
+      l.tempdata<-(dim(tempdata)[1])
+      if(l.tempdata>0){
+        all.blocks.valid<-rbind(all.blocks.valid,tempdata)
+      }
+    }
+    
+    temp[i,4:6]<-validation(cluster=cluster,validation.data=all.blocks.valid,seed=seed,name=paste("test",i,sep=""))
+    dev.off()
+    temp[i,1]<-i;temp[i,2]<-sex;temp[i,3]<-cluster$G; 
+    cluster.list[[i]]<-cluster
+    print(temp)
   }
-}
-
-blocks.valid<-unlist(b,recursive = FALSE)
-blocks.valid<-blocks.valid[c(males.valid)]
-all.blocks.valid.m<-blocks.valid[[1]][1,][-1,]
-for(i in 1:length(blocks.valid)){
-  tempdata<-blocks.valid[[i]]
-  l.tempdata<-(dim(tempdata)[1])
-  if(l.tempdata>0){
-    all.blocks.valid.m<-rbind(all.blocks.valid.m,tempdata)
-  }
+  
+  return(list(cluster.list,temp))
 }
 
 
-path.f<-path.of.animal(number.of.steps=144*3,seed=1,cluster=cluster[[1]])
-setwd(SaveDir)
-pdf("female_validation_dist_ang.pdf")
-par(mfrow=c(2,1))
-plot(density(as.numeric(path.f[,4]),na.rm=T,from=0),sub="female",xlab="distance",main=NA)
-  points(density(all.blocks.valid.f$block_dist.difference,na.rm=T,from=0),col="red",type="l")
-  p.value.dist<-ks.test(all.blocks.valid.f$block_dist.difference,as.numeric(path.f[,4]))$p.value
+cluster.data<-function(data,name){
+  all.test.data<-cbind(data$block_dist.difference,abs(data$block_angle.difference))
+  all.test.data<-all.test.data[which(!is.na(all.test.data[,1]) & !is.na(all.test.data[,2]) ),]
+    
+  fit <- Mclust(all.test.data)
+  cluster<-summary(fit)[]
+  #pdf(name); 
+  plot(fit); 
+  #dev.off()
+
+  return(cluster)
+}
+
+
+validation<-function(cluster,validation.data,seed,name){
+  path<-path.of.animal(number.of.steps=144*3,seed=seed,cluster=cluster)
+  #pdf(paste(name,"_validation_dist_ang.pdf"))
+  
+  #par(mfrow=c(2,1))
+  plot(density(as.numeric(path[,4]),na.rm=T,from=0),sub=name,xlab="distance",main=NA,xlim=c(0,15000),ylim=c(0,6.5*10^-4))
+  points(density(validation.data$block_dist.difference,na.rm=T,from=0),col="red",type="l")
+  p.value.dist<-ks.test(validation.data$block_dist.difference,as.numeric(path[,4]))$p.value
   text(x=6000,y=5.5*10^-4,paste("ks p-value =",round(p.value.dist,3)))
   legend(x=4000,y=4*10^-4,col=c(1,2),lty=c(1,1),legend=c("simulated data","test data set"),cex=0.5)
-plot(density(as.numeric(path.f[,5]),na.rm=T,from=-pi,to=pi),ylim=c(0,0.25),sub="female",xlab="angle",main=NA)
-  points(density(all.blocks.valid.f$block_angle.difference,na.rm=T,from=-pi,to=pi),col="red",type="l")
-  p.value.angle<-ks.test(all.blocks.valid.f$block_angle.difference,as.numeric(path.f[,5]))$p.value
+  
+  plot(density(as.numeric(path[,5]),na.rm=T,from=-pi,to=pi),ylim=c(0,0.35),sub=name,xlab="angle",main=NA)
+  points(density(validation.data$block_angle.difference,na.rm=T,from=-pi,to=pi),col="red",type="l")
+  p.value.angle<-ks.test(validation.data$block_angle.difference,as.numeric(path[,5]))$p.value
   text(x=0,y=0.15,paste("ks p-value =",round(p.value.angle,3)))
   legend(x=-2,y=0.1,col=c(1,2),lty=c(1,1),legend=c("simulated data","test data set"),cex=0.5)
-dev.off()
-
-
-path.m<-path.of.animal(number.of.steps=144*3,seed=1,cluster=cluster[[2]])
-setwd(SaveDir)
-pdf("male_validation_dist_ang.pdf")
-par(mfrow=c(2,1))
-plot(density(as.numeric(path.m[,4]),na.rm=T,from=0),sub="male",xlab="distance",main=NA)
-  points(density(all.blocks.valid.m$block_dist.difference,na.rm=T,from=0),col="red",type="l")
-  p.value.dist<-ks.test(all.blocks.valid.m$block_dist.difference,as.numeric(path.m[,4]))$p.value
-  text(x=6000,y=1.5*10^-4,paste("ks p-value =",round(p.value.dist,3)))
-  legend(x=4000,y=1*10^-4,col=c(1,2),lty=c(1,1),legend=c("simulated data","test data set"),cex=0.5)
-plot(density(as.numeric(path.m[,5]),na.rm=T,from=-pi,to=pi),ylim=c(0,0.25),sub="male",xlab="angle",main=NA)
-  points(density(all.blocks.valid.m$block_angle.difference,na.rm=T,from=-pi,to=pi),col="red",type="l")
-  p.value.angle<-ks.test(all.blocks.valid.m$block_angle.difference,as.numeric(path.m[,5]))$p.value
-  text(x=0,y=0.1,paste("ks p-value =",round(p.value.angle,3)))
-  legend(x=-2,y=0.1,col=c(1,2),lty=c(1,1),legend=c("simulated data","test data set"),cex=0.5)
-dev.off()
-
-pdf("female_validation_areause.pdf")
-par(mfrow=c(1,1))
-plot(0,type="n",xlim=c(0,100),ylim=c(0,100),ylab="%age locations within area",xlab="%age of inner area",sub="female")
-f<-plot.erosion.of.convex.hull(cbind(as.numeric(path.f[,1]),as.numeric(path.f[,2])),no.levels=500,index.divider=100000)
-points(f[,1:2],type="l")
-c.blocks<-names(table(all.blocks.valid.f[!is.na(all.blocks.valid.f[,13]),]$block_number))
-count=0
-for(i in c.blocks){
-  time.spent.convex.hull<-plot.erosion.of.convex.hull(alwl.blocks.valid.f[,13:12][which(!is.na(all.blocks.valid.f[,13]) & all.blocks.valid.f$block_number==i),],
-                                                      no.levels=500,index.divider=100000)
-  points(time.spent.convex.hull[,1:2],type="l",col="red")
-  p.value<-ks.test(time.spent.convex.hull[,2],f[,2])$p.value
-  print(p.value)
- text(90,20-(count*5),paste("ks.test pvalue = ",round(p.value,3)),cex=0.8);count=count+1
+  
+  #dev.off()
+  
+  #pdf(paste(name,"_validation_areause.pdf"))
+  #par(mfrow=c(1,1))
+  
+  plot(0,type="n",xlim=c(0,100),ylim=c(0,100),ylab="%age locations within area",xlab="%age of inner area",sub=name)
+  
+  validation.erosion<-plot.erosion.of.convex.hull(cbind(as.numeric(path[,1]),as.numeric(path[,2])),no.levels=500,index.divider=50000)
+  points(validation.erosion[,1:2],type="l")
+  c.blocks<-names(table(validation.data[!is.na(validation.data[,13]),]$block_number))
+  count=0
+  for(i in c.blocks){
+    time.spent.convex.hull<-plot.erosion.of.convex.hull(validation.data[,13:12][which(!is.na(validation.data[,13]) & validation.data$block_number==i),],
+                                                        no.levels=500,index.divider=50000)
+    points(time.spent.convex.hull[,1:2],type="l",col="red")
+    p.value<-ks.test(time.spent.convex.hull[,2],validation.erosion[,2])$p.value
+    print(p.value)
+    text(70,15-(count*5),paste("ks.test pvalue = ",round(p.value,3)),cex=0.8);count=count+1
+  }
+  legend(0,100,col=c(1,2),lty=c(1,1),legend=c("simulated data","test data set"),cex=0.5)
+  #dev.off()
+  
+  return(matrix(ncol=3,nrow=1,c(p.value.dist,p.value.angle,p.value)))
 }
-legend(0,100,col=c(1,2),lty=c(1,1),legend=c("simulated data","test data set"),cex=0.5)
-dev.off()
 
-pdf("male_validation_areause.pdf")
-plot(0,type="n",xlim=c(0,100),ylim=c(0,100),ylab="%age locations within area",xlab="%age of inner area",sub="male")
-m<-plot.erosion.of.convex.hull(cbind(as.numeric(path.m[,1]),as.numeric(path.m[,2])),no.levels=500,index.divider=100000)
-points(m[,1:2],type="l")
-c.blocks<-names(table(all.blocks.valid.m[!is.na(all.blocks.valid.m[,13]),]$block_number))
-count=0
-for(i in c.blocks){
-  time.spent.convex.hull<-plot.erosion.of.convex.hull(all.blocks.valid.m[,13:12][which(!is.na(all.blocks.valid.m[,13]) & all.blocks.valid.m$block_number==i),],
-                                                      no.levels=500,index.divider=100000)
-  points(time.spent.convex.hull[,1:2],type="l",col="red")
-  p.value<-ks.test(time.spent.convex.hull[,2],m[,2])$p.value
-  print(p.value)
-  text(90,20-(count*5),paste("ks.test pvalue = ",round(p.value,3)),cex=0.8);count=count+1
-}
-legend(0,100,col=c(1,2),lty=c(1,1),legend=c("simulated data","test data set"),cex=0.5)
-dev.off()
 
-pdf("male_simulated_movement.pdf")
-plot(cbind(as.numeric(path.m[,1]),as.numeric(path.m[,2])),type="l",xlab="x",ylab="y",main="movement of male")
-dev.off()
-pdf("female_simulated_movement.pdf")
-plot(cbind(as.numeric(path.f[,1]),as.numeric(path.f[,2])),type="l",xlab="x",ylab="y",main="movement of male")
-dev.off()
+
+#############################
+
+b<-data.for.classifcation.summer.min50[[2]]
+test<-classifcation.simulation.validation(b,seed=1)
+## add animial ID and the number of validation points to table
+

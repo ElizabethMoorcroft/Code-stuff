@@ -174,4 +174,4 @@ create.blocks<-function(data,no.of.miss.occasions,min.no.locations,start.month,N
   return(list(blocks,results))
 }
 
-data.for.classifcation.summer<-create.blocks(Data,no.of.miss.occasions=10,min.no.locations=40,start.month=4,Noofmonths=3)
+data.for.classifcation.summer<-create.blocks(Data,no.of.miss.occasions=5,min.no.locations=25,start.month=4,Noofmonths=3)
