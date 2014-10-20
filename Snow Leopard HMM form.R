@@ -35,20 +35,20 @@ change.in.animal.direction<-function(data){
 }
 
 add.blanks.and.calculate.values<-function(data,no.of.miss.occasions){
-  print("data");print(data)
+  #print("data");print(data)
   possible.difference<-(1:no.of.miss.occasions)*5
   
   
   l<-dim(data)[1]
   time<-diff.time.between.locations(data$Date_Time[c(l-1,l)])
   
-  print(l);print(time)
+ # print(l);print(time)
   
   for(j in 1:no.of.miss.occasions){
     if(abs(time-possible.difference[j])<0.5){
       temp.blank<-as.data.frame(matrix(ncol=dim(data)[2],nrow=(j-1)));names(temp.blank)<-names(data)
       temp<-rbind(data[1:(l-1),],temp.blank,data[l,]); 
-      print("temp");print(temp)
+     # print("temp");print(temp)
       temp$block_time.difference[l+j-1]<-time
       temp$block_dist.difference[l+j-1]<-Distance.between.GPS.in.meters(temp$Latitude[j+l-2],temp$Latitude[j+l-1],temp$Longitude[j+l-2],temp$Longitude[j+l-1])
       temp$block_bearing[l+j-1]<-direction.of.animal(temp[c(j+l-2,j+l-1),])
@@ -96,7 +96,7 @@ blocks.within.animal<-function(data,no.of.miss.occasions){
   list.of.blocks<-list()
   counter<-1
   while(dim(data)[1]>1){
-    print(dim(data)[1])
+    #print(dim(data)[1])
     ids<-find.next.location(data,no.of.miss.occasions)
     remove.rows<-which(data$LocID %in% ids)
     data<-data[-remove.rows,]
@@ -165,13 +165,16 @@ create.blocks<-function(data,no.of.miss.occasions,min.no.locations,start.month,N
   for(i in 1:length(blocks)){
     animal.block<-blocks[[i]]
     animal.i.results<-list();counter=1
-    for(j in 1:length(animal.block)){
+    l.animal.block<-length(animal.block)
+    if(l.animal.block>0){
+    for(j in 1:l.animal.block){
+      #print(paste("length animal block",length(animal.block)))
       newblock<-convert.locid.into.data(data,no.of.miss.occasions,loc.ids=animal.block[[j]],min.no.locations)
       if(is.data.frame(newblock)){animal.i.results[[counter]]<-newblock; counter=counter+1}
-    }
+    }}
     results[[i]]<-animal.i.results
   }
   return(list(blocks,results))
 }
 
-data.for.classifcation.summer<-create.blocks(Data,no.of.miss.occasions=5,min.no.locations=25,start.month=4,Noofmonths=3)
+#data.for.classifcation.summer<-create.blocks(Data,no.of.miss.occasions=5,min.no.locations=25,start.month=4,Noofmonths=3)

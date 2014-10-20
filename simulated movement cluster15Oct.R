@@ -90,7 +90,7 @@ classifcation.simulation.validation<-function(data,seed){
   all.block.numbers<-1:length(unlist(data,recursive=FALSE))
   
   cluster.list<-vector(mode="list",length=length(unlist(data,recursive=FALSE)))
-  temp<-matrix(ncol=6,nrow=length(unlist(data,recursive=FALSE)))
+  temp<-matrix(ncol=10,nrow=length(unlist(data,recursive=FALSE)))
   
   for(i in all.block.numbers){
     print(i)
@@ -120,6 +120,7 @@ classifcation.simulation.validation<-function(data,seed){
         all.blocks<-rbind(all.blocks,tempdata)
       }
     }
+    temp[i,4]<-paste(unique(all.blocks$AnimID),collapse = ",");temp[i,5]<-sum(!is.na(all.blocks$Sex))
     
     cluster<-cluster.data(all.blocks,name=paste(sex,"cluster",i,".pdf",sep="")) 
     
@@ -131,8 +132,10 @@ classifcation.simulation.validation<-function(data,seed){
         all.blocks.valid<-rbind(all.blocks.valid,tempdata)
       }
     }
+    temp[i,6]<-paste(unique(all.blocks.valid$AnimID),collapse = ",");temp[i,7]<-sum(!is.na(all.blocks.valid$Sex))
     
-    temp[i,4:6]<-validation(cluster=cluster,validation.data=all.blocks.valid,seed=seed,name=paste("test",i,sep=""))
+    
+    temp[i,8:10]<-validation(cluster=cluster,validation.data=all.blocks.valid,seed=seed,name=paste("test",i,sep=""))
     dev.off()
     temp[i,1]<-i;temp[i,2]<-sex;temp[i,3]<-cluster$G; 
     cluster.list[[i]]<-cluster
@@ -203,7 +206,73 @@ validation<-function(cluster,validation.data,seed,name){
 
 #############################
 
-b<-data.for.classifcation.summer.min50[[2]]
+data.for.classifcation.spring<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=50,start.month=1,Noofmonths=3)
+data.for.classifcation.winter<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=50,start.month=10,Noofmonths=3)
+data.for.classifcation.summer<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=50,start.month=4,Noofmonths=3)
+data.for.classifcation.autumn<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=50,start.month=7,Noofmonths=3)
+
+
+data.for.classifcation.spring.25<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=25,start.month=1,Noofmonths=3)
+data.for.classifcation.winter.25<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=25,start.month=10,Noofmonths=3)
+data.for.classifcation.summer.25<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=25,start.month=4,Noofmonths=3)
+data.for.classifcation.autumn.25<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=25,start.month=7,Noofmonths=3)
+
+data.for.classifcation.spring.35<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=35,start.month=1,Noofmonths=3)
+data.for.classifcation.winter.35<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=35,start.month=10,Noofmonths=3)
+data.for.classifcation.summer.35<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=35,start.month=4,Noofmonths=3)
+data.for.classifcation.autumn.35<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=35,start.month=7,Noofmonths=3)
+
+data.for.classifcation.may.25<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=25,start.month=4,Noofmonths=1)
+data.for.classifcation.june.25<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=25,start.month=5,Noofmonths=1)
+
+b<-data.for.classifcation.may.25[[2]]
+test.may.25<-classifcation.simulation.validation(b,seed=1)
+b<-data.for.classifcation.june.25[[2]]
+test.june.25<-classifcation.simulation.validation(b,seed=1)
+
+
+b.s35<-data.for.classifcation.spring.35[[2]]
+class.spring.25<-classifcation.simulation.validation(b.s35,seed=1)
+b.w35<-data.for.classifcation.winter.35[[2]]
+class.winter.25<-classifcation.simulation.validation(b.w35,seed=1)
+b.s35<-data.for.classifcation.summer.35[[2]]
+class.summer.25<-classifcation.simulation.validation(b.sum35,seed=1)
+b.a35<-data.for.classifcation.autumn.35[[2]]
+class.autumn.25<-classifcation.simulation.validation(b.a35,seed=1)
+
+
+b<-data.for.classifcation.spring.50[[2]]
 test<-classifcation.simulation.validation(b,seed=1)
+
+
+b<-data.for.classifcation.winter.50[[2]]
+test.winter.50<-classifcation.simulation.validation(b,seed=1)
+
+b<-data.for.classifcation.summer[[2]]
+test.summer<-classifcation.simulation.validation(b,seed=1)
+
+b<-data.for.classifcation.autumn[[2]]
+test.autumn<-classifcation.simulation.validation(b,seed=1)
 ## add animial ID and the number of validation points to table
 
+# block of 10
+2
+0
+2
+0
+2
+0
+2
+0
+2
+0
+2
+0
+2
+0
+2
+0
+2
+0
+2
+0

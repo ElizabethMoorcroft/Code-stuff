@@ -15,8 +15,8 @@ library("spatstat") # for the owin function
 
 ####
 # Load data
-Data<-read.csv("CurrentData.csv")
-row.numbers<-Months(Data,6,3)[[3]]
+#Data<-read.csv("CurrentData.csv")
+#row.numbers<-Months(Data,6,3)[[3]]
 
 ####
 
@@ -104,7 +104,7 @@ plot.erosion.of.convex.hull<-function(points, index.divider=500,no.levels=10){
 	#plot(0,type="n",
   #     xlim=c(min.x.value,max.x.value),ylim=c(min.y.value,max.y.value),
   #     xlab="",ylab=""
-	)
+#	)
 	
 	shape<-points.to.object(points)
 	if(is.empty(shape)){print("Error: Shape is empty at start of plot"); break;}
