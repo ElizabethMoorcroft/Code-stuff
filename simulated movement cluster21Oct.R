@@ -9,6 +9,13 @@
 
 
 ###
+library(RColorBrewer)
+library(GISTools)
+library(CircStats)
+
+
+
+###
 # Functions
 #	  x
 #    ___
@@ -27,12 +34,12 @@ new.location<-function(current.location, distance, angle){
 	return(new.location)
 }
 
-new.point<-function(cluster,seed){
+new.point<-function(cluster,seed,markov.matrix){
   point<-matrix(ncol=2,nrow=1)
   set.seed(seed)
   seed.vector<-sample(size=300,x=1*10^6)[c(100,200,300)]
   set.seed(seed.vector[1])
-  i<-which(rmultinom(1, size=1, prob=cluster$pro)==1)
+  i<-which(rmultinom(1, size=1, prob=markov.matrix)==1)
   seed<-seed.vector[2]
   while(is.na(point[,1])| is.na(point[,2])){
     set.seed(seed)
@@ -47,32 +54,38 @@ new.point<-function(cluster,seed){
   sign<-rbinom(1,1,0.5)*2-1
   point[,1]<-point[,1]
   point[,2]<-point[,2]*sign
-  return(point)
+  return(list(point,i))
 }
 
-path.of.animal<-function(number.of.steps,seed,cluster){
+path.of.animal<-function(number.of.steps,seed,cluster,data,classifications){
 	# Creates a stream of random numbers
 	set.seed(seed)
 	random.stream<-sample(size=number.of.steps*10,x=number.of.steps*10^6)[(1:number.of.steps)*10]
-	
+	t<-table(classifications[1:(length(classifications)-1)],classifications[2:length(classifications)])
+  markov.matrix<-t/rowSums(t)
+
+  
 	# Sets the initial time and location and state
 	new.time<-as.POSIXlt('2000-1-1 00:00:00')
 	new.location.est<-c(0,0)#c(rnorm(1,0,100),rnorm(1,0,100))
-	current.location<-matrix(ncol=5,c(new.location.est,as.character(new.time),NA,NA))
+	current.class<-which(rmultinom(1, size=1, prob=cluster$pro)==1)
+	current.location<-matrix(ncol=6,c(new.location.est,as.character(new.time),NA,NA,current.class))
+  
 	
 	#print(current.location)
 	
 	for(step in 1:number.of.steps){
 		set.seed(random.stream[step])
 		random.stream.two<-sample(size=50,x=50*10^6)
-
-    point<-new.point(cluster,random.stream.two[50])
+    
+    pointandclass<-new.point(cluster,random.stream.two[50],markov.matrix[current.class,])
+    point<-pointandclass[[1]];current.class<-pointandclass[[2]]
 		new.time<-new.time+5*60*60
 		new.location.est<-new.location(new.location.est, distance=point[1], angle=point[2])
 		
-		current.location<-rbind(current.location,c(new.location.est,as.character(new.time),distance=point[1],angle=point[2]))		
+		current.location<-rbind(current.location,c(new.location.est,as.character(new.time),distance=point[1],angle=point[2],current.class))
 	}
-	colnames(current.location)<-c("x","y","Date_Time","Dist_Difference","ChangeAngle")
+	colnames(current.location)<-c("x","y","Date_Time","Dist_Difference","ChangeAngle","CurrentState")
 	return(current.location)
 }
 ################################
@@ -97,7 +110,6 @@ classifcation.simulation.validation<-function(data,seed,name){
     sample<-all.block.numbers[-i]
     blocks.sample<-blocks[c(sample)]
     
-    print(which(unlist(lapply(blocks.sample,function(x){x$Sex[1]}))==sex))
     
     blocks.sample<-blocks.sample[which(unlist(lapply(blocks.sample,function(x){x$Sex[1]}))==sex)]
     
@@ -136,7 +148,7 @@ classifcation.simulation.validation<-function(data,seed,name){
     
     temp[i,8]<-cluster$bic
     
-    temp[i,9:11]<-validation(cluster=cluster,validation.data=all.blocks.valid,seed=seed,name=paste(name,i,sep=""))
+    temp[i,9:11]<-validation(cluster=cluster,validation.data=all.blocks.valid,seed=seed,name=paste(name,i,sep=""),classifications=list.all.blocks[[i]]$classification.of.cluster)
     dev.off()
     temp[i,1]<-i;temp[i,2]<-sex;temp[i,3]<-cluster$G; 
     cluster.list[[i]]<-cluster
@@ -160,8 +172,8 @@ cluster.data<-function(data,name){
 }
 
 
-validation<-function(cluster,validation.data,seed,name){
-  path<-path.of.animal(number.of.steps=144*3,seed=seed,cluster=cluster)
+validation<-function(cluster,validation.data,seed,name,classifications){
+  path<-path.of.animal(number.of.steps=144*3,seed=seed,cluster=cluster,classifications=classifications)
   #pdf(paste(name,"_validation_dist_ang.pdf"))
   
   #par(mfrow=c(2,1))
@@ -206,6 +218,23 @@ validation<-function(cluster,validation.data,seed,name){
 
 #############################
 
+data.for.classifcation.spring<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=50,start.month=1,Noofmonths=3)
+data.for.classifcation.winter<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=50,start.month=10,Noofmonths=3)
+data.for.classifcation.summer<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=50,start.month=4,Noofmonths=3)
+data.for.classifcation.autumn<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=50,start.month=7,Noofmonths=3)
+
+
+data.for.classifcation.spring.25<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=25,start.month=1,Noofmonths=3)
+data.for.classifcation.winter.25<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=25,start.month=10,Noofmonths=3)
+data.for.classifcation.summer.25<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=25,start.month=4,Noofmonths=3)
+data.for.classifcation.autumn.25<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=25,start.month=7,Noofmonths=3)
+data.for.classifcation.may.25<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=25,start.month=4,Noofmonths=1)
+data.for.classifcation.june.25<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=25,start.month=5,Noofmonths=1)
+b<-data.for.classifcation.may.25[[2]]
+test.may.25<-classifcation.simulation.validation(b,seed=1)
+b<-data.for.classifcation.june.25[[2]]
+test.june.25<-classifcation.simulation.validation(b,seed=1)
+
 
 
 data.for.classifcation.spring.25<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=25,start.month=1,Noofmonths=3)
@@ -226,22 +255,18 @@ data.for.classifcation.summer.50<-create.blocks(Data,no.of.miss.occasions=4,min.
 data.for.classifcation.autumn.50<-create.blocks(Data,no.of.miss.occasions=4,min.no.locations=50,start.month=7,Noofmonths=3)
 
 
-setwd(SaveDir)
 b.s25<-data.for.classifcation.spring.25[[2]]
 class.spring.25<-classifcation.simulation.validation(b.s25,seed=1,"Spring_25locs_")
-write.csv(class.spring.25[[2]],"Spring_25locs_ValidationTable.csv")
 
 b.w25<-data.for.classifcation.winter.25[[2]]
 class.winter.25<-classifcation.simulation.validation(b.w25,seed=1,"Winter_25locs_")
-write.csv(class.winter.25[[2]],"Winter_25locs_ValidationTable.csv")
 
 b.sum25<-data.for.classifcation.summer.25[[2]]
-class.summer.25<-classifcation.simulation.validation(b.sum25,seed=1,"Summer_25locs_")
-write.csv(class.summer.25[[2]],"Summer_25locs_ValidationTable.csv")
+mm.class.summer.25<-classifcation.simulation.validation(b.sum25,seed=1,"Summer_25locs_")
 
 b.a25<-data.for.classifcation.autumn.25[[2]]
 class.autumn.25<-classifcation.simulation.validation(b.a25,seed=1,"Autumn_25locs_")
-write.csv(class.autumn.25[[2]],"Autumn_25locs_ValidationTable.csv")
+
 
 b.s35<-data.for.classifcation.spring.35[[2]]
 class.spring.35<-classifcation.simulation.validation(b.s35,seed=1,"Spring_35locs_")
@@ -265,12 +290,8 @@ class.winter.50<-classifcation.simulation.validation(b.w50,seed=1,"Winter_50locs
 b.sum50<-data.for.classifcation.summer.50[[2]]
 class.summer.50<-classifcation.simulation.validation(b.sum50,seed=1,"Summer_50locs_")
 
- 
-
-write.csv(class.summer.50[[2]],"Summer_50locs_ValidationTable.csv")
-write.csv(class.spring.50[[2]],"Spring_50locs_ValidationTable.csv")
-write.csv(class.winter.50[[2]],"Winter_50locs_ValidationTable.csv")
-write.csv(class.autumn.50[[2]],"Autumn_50locs_ValidationTable.csv")
+b.a50<-data.for.classifcation.autumn.50[[2]]
+class.autumn.50<-classifcation.simulation.validation(b.a50,seed=1,"Autumn_50locs_")
 
 ## add animial ID and the number of validation points to table
 

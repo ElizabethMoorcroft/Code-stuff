@@ -28,6 +28,9 @@ source("Snow Leopard Exclusion.R")
 setwd(CodeDir)
 source("Snow Leopard Image angle plot.R")
 source("Snow Leopard Circular graphs.R")
+source("Snow Leopard HMM form.R")
+source("Snow Leopard Clipping Contour.R")
+
 
 
 #-Libraries
@@ -41,6 +44,10 @@ library(plotrix) # For the polar.plot
 library(spatstat)
 #library(maps)
 library(vioplot)
+library(mclust) #For simulation/validation
+library(mvtnorm) #For simulation/validation
+library(CircStats)
+library(GISTools)
 #library(betareg)
 
 #-Colours
