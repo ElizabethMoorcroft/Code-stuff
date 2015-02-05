@@ -65,7 +65,9 @@ add.blanks.and.calculate.values<-function(data,no.of.miss.occasions){
   time<-diff.time.between.locations(data$Date_Time[c(l-1,l)])
   
   for(j in 1:no.of.miss.occasions){
-    if(abs(time-possible.difference[j])<0.5){ data<-update.with.blanks(data=data,time=time,j=j,l=l); break; }
+    if(!is.na(time)){
+      if(abs(time-possible.difference[j])<0.5){ data<-update.with.blanks(data=data,time=time,j=j,l=l); break; }
+    } else{break;}
   }
   return(data)
 }

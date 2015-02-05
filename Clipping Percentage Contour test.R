@@ -79,7 +79,7 @@ change.in.numbers<-function(total.area, total.counts, new.values){
 ####
 update.plot<-function(shape, points, indent.value, results,total.counts,total.area,Col){
 	  shape<-indent.shape(shape,indent.value)
-      #plot(shape,col=Col,border=Col,add=TRUE)
+     #plot(shape,col=Col,border=Col,add=TRUE)
 	  
 	  number.counts.and.area<-size.and.points(shape,points)
 	  indent.results<-change.in.numbers(total.counts=total.counts,total.area=total.area,number.counts.and.area)
@@ -92,6 +92,9 @@ update.plot<-function(shape, points, indent.value, results,total.counts,total.ar
 # Plot
 plot.erosion.of.convex.hull<-function(points, index.divider=500,no.levels=10){
 	
+  area<-mcp.area(xy=SpatialPoints(points), percent=100, unin = c("m"), unout = c("m2"),plotit=FALSE)
+  
+  
 	#Colours used in plots
 	COL1 = brewer.pal(9, "BuGn")[1]
 	COL2 = brewer.pal(9, "BuGn")[9]
@@ -100,15 +103,12 @@ plot.erosion.of.convex.hull<-function(points, index.divider=500,no.levels=10){
 	min.x.value<-min(points[,1],na.rm=T); max.x.value<-max(points[,1],na.rm=T)
 	min.y.value<-min(points[,2],na.rm=T); max.y.value<-max(points[,2],na.rm=T)
 
-	#par(mfrow=c(1,1))
-	#plot(0,type="n",
-  #     xlim=c(min.x.value,max.x.value),ylim=c(min.y.value,max.y.value),
-  #     xlab="",ylab=""
-#	)
+	par(mfrow=c(1,1))
+	#plot(0,type="n", xlim=c(min.x.value,max.x.value),ylim=c(min.y.value,max.y.value), xlab="",ylab="")
 	
 	shape<-points.to.object(points)
 	if(is.empty(shape)){print("Error: Shape is empty at start of plot"); break;}
-    #plot(shape,col=Col[1],border=Col[no.levels],main="",add=T) # Adds to plot
+   #plot(shape,col=Col[1],border=Col[no.levels],main="",add=T) # Adds to plot
 	
 	# total number of points and size
 	total.counts<-dim(points)[1]
@@ -132,6 +132,21 @@ plot.erosion.of.convex.hull<-function(points, index.divider=500,no.levels=10){
       				,silent=TRUE)
       if(is.list(result.new)){results<-result.new[[1]];shape<-result.new[[2]]} else {break;}
   }
-  return(results)
+  return(list(results,"area"=area))
 }
 
+### For the whole time 
+#names.for.animals<-names(table(Data$AnimID))
+#list.of.animal.erosion<-list()
+#for(i in 1:length(names.for.animals)){
+#  temp<-Data[which(Data$AnimID==names.for.animals[i]),]
+#  temp1<-cbind(temp$UTM_X_Zone,temp$UTM_Y_Zone)
+#  temp2<-temp1[!is.na(temp1[,1]),]
+#  t<-plot.erosion.of.convex.hull(temp2, index.divider=1000,no.levels=20)
+#  list.of.animal.erosion[[i]]<-t
+#  points(temp2)
+#}
+
+#for(i in 1:length(names.for.animals)){points(list.of.animal.erosion[[i]],type="l")}
+#plot(xlim=c(0,100),ylim=c(0,100),0,type="n")
+#points(c(0,100),c(0,100),type="l",col="red")

@@ -28,7 +28,7 @@ PlotCircularGraphsSex<-function(Data,round,COLS,VARIABLE,Radius){
 PlotCircularGraphs<-function(Data,round,COL,ADD,Radius){
   data<-Data[!is.na(Data)]
   t<-table(round(data,round))/length(data)
-  polar.plot(as.vector(t*100),as.numeric(names(t))*180/pi,main=NULL,lwd=2,line.col=COL,rp.type="polygon",add=ADD,radial.lim=c(0,Radius),radial.labels="")
+  polar.plot(as.vector(t*100),as.numeric(names(t))*180/pi,main=NULL,lwd=1,line.col=COL,rp.type="polygon",add=ADD,radial.lim=c(0,Radius),radial.labels="")
 }
 
 PlotCircularGraphsIndivid<-function(Data,round,COLS,VARIABLE,Radius){
